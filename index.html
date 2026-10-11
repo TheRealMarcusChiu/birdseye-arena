@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Birdseye Arena</title>
+<style>
+:root{--bg:#07090f;--s:#0d1020;--s2:#141828;--brd:#1e2440;--acc:#4a8eff;--acc2:#a060ff;--danger:#ff3366;--ok:#30ff88;--tx:#c0ccee;--dim:#4a5880;--mono:'Courier New',monospace;color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--tx)}
+button,input{font:inherit}
+[hidden]{display:none!important}
+
+/* ── Lobby ─────────────────────────────────────────────────────────── */
+#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:radial-gradient(ellipse at 50% 40%,#0d1230 0%,var(--bg) 70%)}
+.lcard{background:var(--s);border:1px solid var(--brd);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 0 60px rgba(74,142,255,.07)}
+.gtitle{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;background:linear-gradient(130deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.gsub{font-size:12px;color:var(--dim);margin-bottom:32px;letter-spacing:.3px}
+.choice-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:11px 16px;border:1px solid var(--brd);border-radius:9px;background:var(--s2);color:var(--tx);font-size:13px;font-weight:600;cursor:pointer;transition:filter .12s,background .12s;text-align:center}
+.btn:hover:not(:disabled){filter:brightness(1.2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--acc);color:#fff;border-color:transparent;box-shadow:0 0 20px rgba(74,142,255,.25)}
+.btn.full{width:100%}
+.btn.sm{padding:7px 12px;font-size:12px}
+.btn.danger{background:var(--danger);color:#fff;border-color:transparent}
+label{display:block;font-size:11px;font-weight:600;color:var(--dim);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
+input[type=text]{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--tx);font-size:14px;outline:none;transition:border-color .15s}
+input[type=text]:focus{border-color:var(--acc)}
+input::placeholder{color:var(--dim)}
+#codeInput{text-transform:uppercase;letter-spacing:4px;font-family:var(--mono);font-size:16px}
+.entry-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+#status{margin-top:16px;min-height:36px;font-size:13px;color:var(--tx);line-height:1.5}
+#status:empty{display:none}
+.lobby-note{margin-top:20px;font-size:11px;color:var(--dim);line-height:1.6;text-align:center}
+.small-screen-warn{margin-top:16px;padding:12px 14px;background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.3);border-radius:8px;font-size:12px;color:#ff8099}
+
+/* ── Game ──────────────────────────────────────────────────────────── */
+#game{display:flex;height:100vh;overflow:hidden}
+#canvasWrap{flex:1;display:flex;align-items:center;justify-content:center;background:#030508;overflow:hidden;min-width:0}
+#canvas{display:block;max-width:100%;max-height:100%;cursor:crosshair;image-rendering:crisp-edges}
+#sidebar{width:196px;min-width:196px;background:var(--s);border-left:1px solid var(--brd);padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;font-size:13px}
+.hud-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:5px}
+.health-track{height:7px;background:var(--s2);border-radius:4px;overflow:hidden}
+#hudHealthBar{height:100%;border-radius:4px;background:var(--ok);transition:width .12s,background .12s}
+.weapon-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.weapon-btn{padding:6px 2px;font-size:10px;font-weight:700;background:var(--s2);border:1px solid var(--brd);border-radius:6px;color:var(--dim);cursor:pointer;text-align:center;transition:all .1s;letter-spacing:.3px}
+.weapon-btn.active{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 0 8px rgba(74,142,255,.4)}
+.kd-row{display:flex;align-items:baseline;gap:6px;font-family:var(--mono)}
+#hudKills{font-size:26px;font-weight:700;color:var(--ok)}
+#hudDeaths{font-size:26px;font-weight:700;color:var(--danger)}
+.kd-sep{font-size:16px;color:var(--dim)}
+.kd-label{font-size:10px;color:var(--dim);margin-left:2px}
+.player-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-top:1px solid var(--brd);font-size:11px}
+.player-row.dead{opacity:.4}
+.player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.player-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player-kd{font-family:var(--mono);font-size:10px;color:var(--dim);flex-shrink:0}
+#hudRoomCode{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:4px;color:var(--acc);margin-bottom:6px}
+.feed-row{font-size:10px;color:var(--dim);padding:2px 0;border-bottom:1px solid var(--brd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-footer{margin-top:auto;padding-top:8px}
+.hud-sep{border:0;border-top:1px solid var(--brd)}
+
+@media(max-width:900px){
+  #game{flex-direction:column}
+  #sidebar{width:100%;min-width:0;flex-direction:row;flex-wrap:wrap;height:auto;padding:8px 12px;gap:8px;align-items:center;border-left:0;border-top:1px solid var(--brd)}
+  #canvasWrap{flex:1;min-height:0}
+  #sidebar .hud-footer{margin-top:0}
+}
+</style>
+</head><body>
+
+<!-- ── Lobby ─────────────────────────────────────────────────────────────── -->
+<div id="lobby">
+  <div class="lcard">
+    <div class="gtitle">Birdseye Arena</div>
+    <div class="gsub">Top-down multiplayer shooter · Up to 8 players</div>
+
+    <div id="choice">
+      <div class="choice-btns">
+        <button id="btnCreate" class="btn primary">Create Room</button>
+        <button id="btnJoin" class="btn">Join Room</button>
+      </div>
+    </div>
+
+    <form id="entry" hidden>
+      <div id="entryTitle" style="font-size:15px;font-weight:700;margin-bottom:4px">Join Room</div>
+      <label for="nameInput">Your name</label>
+      <input id="nameInput" type="text" maxlength="24" placeholder="Enter name" autocomplete="nickname" autocorrect="off">
+      <div id="codeField">
+        <label for="codeInput">Room code</label>
+        <input id="codeInput" type="text" maxlength="4" placeholder="ABCD" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="entry-btns">
+        <button id="btnBack" type="button" class="btn">← Back</button>
+        <button id="createBtn" type="submit" class="btn primary" hidden>Create</button>
+        <button id="joinBtn" type="submit" class="btn primary" hidden>Join</button>
+      </div>
+    </form>
+
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <div class="lobby-note">
+      WASD / arrows · Mouse aim · Hold LMB to shoot · 1 2 3 or scroll to switch weapon
+      <div id="smallScreenWarn" class="small-screen-warn" hidden>
+        Best played on desktop with keyboard &amp; mouse. Controls may not work on touch devices.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Game ──────────────────────────────────────────────────────────────── -->
+<div id="game" hidden>
+  <div id="canvasWrap">
+    <canvas id="canvas" width="800" height="600" aria-label="Top-down arena — use WASD to move, mouse to aim, click to shoot"></canvas>
+  </div>
+  <div id="sidebar">
+    <div>
+      <div class="hud-label">Health</div>
+      <div class="health-track"><div id="hudHealthBar" style="width:100%"></div></div>
+    </div>
+    <div>
+      <div class="hud-label">Weapon</div>
+      <div class="weapon-row">
+        <button class="weapon-btn active">1 PISTOL</button>
+        <button class="weapon-btn">2 RIFLE</button>
+        <button class="weapon-btn">3 SHOT</button>
+      </div>
+    </div>
+    <div>
+      <div class="kd-row">
+        <span id="hudKills">0</span>
+        <span class="kd-sep">/</span>
+        <span id="hudDeaths">0</span>
+        <span class="kd-label">K/D</span>
+      </div>
+    </div>
+    <hr class="hud-sep">
+    <div>
+      <div class="hud-label">Players</div>
+      <div id="hudPlayers"></div>
+    </div>
+    <hr class="hud-sep">
+    <div>
+      <div class="hud-label">Room</div>
+      <div id="hudRoomCode"></div>
+      <button id="shareBtn" class="btn sm full">Share Link</button>
+    </div>
+    <div>
+      <div class="hud-label">Kill Feed</div>
+      <div id="hudFeed"></div>
+    </div>
+    <div class="hud-footer">
+      <button id="btnLeave" class="btn danger full">Leave Room</button>
+    </div>
+  </div>
+</div>
+
+<script src="./vendor/peerjs.min.js"></script>
+<script type="module">
+'use strict';
+import {
+  GameEngine, WEAPONS, MAX_HEALTH, MAX_PLAYERS, MAX_BULLETS,
+  PLAYER_RADIUS, BULLET_RADIUS, TICK_MS, WORLD_W, WORLD_H,
+  DEFAULT_OBSTACLES, PREFIX, normalizeAngle,
+} from './engine.js';
+
+// ── DOM ─────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const lobbyEl   = $('lobby');
+const gameEl    = $('game');
+const choiceEl  = $('choice');
+const entryEl   = $('entry');
+const nameInput = $('nameInput');
+const codeInput = $('codeInput');
+const codeField = $('codeField');
+const statusEl  = $('status');
+const canvas    = $('canvas');
+const ctx       = canvas.getContext('2d');
+
+// ── URL params ───────────────────────────────────────────────────────────────
+const urlParams = new URLSearchParams(location.search);
+const peerOptions = urlParams.get('signal') === 'local' ? {
+  host:   urlParams.get('signalHost') || '127.0.0.1',
+  port:   Number(urlParams.get('signalPort') || 9001),
+  path:   '/peerjs',
+  secure: false,
+} : {};
+
+// Room-code override for collision testing (set window.__overrideNextCode externally)
+window.__overrideNextCode = null;
+
+// ── State ────────────────────────────────────────────────────────────────────
+let peer = null, upstream = null, isHost = false, ready = false;
+let myId = '', code = '', myName = '';
+let engine = null;          // host only — GameEngine instance
+let guestState = null;      // guest only — latest state object from host
+let obstacles  = DEFAULT_OBSTACLES;
+let colorIndex = 0;
+const connections = new Map();  // host: peerId → RTCDataConnection
+let tickInterval = null, setupTimer = null, heartbeatInterval = null;
+let cameraX = 0, cameraY = 0;
+
+// Input
+const keysDown = {};
+let mouseAngle = 0, shooting = false, currentWeapon = 0;
+
+// Kill feed (last 5 events)
+const killFeed = [];
+
+// Sidebar throttle
+let lastSidebarUpdate = 0;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function setStatus(msg) { statusEl.textContent = msg; }
+
+function playerColor(idx) {
+  const hue = (idx * 137.508) % 360;
+  return `hsl(${hue.toFixed(1)},78%,62%)`;
+}
+
+function makeCode() {
+  if (window.__overrideNextCode) {
+    const c = window.__overrideNextCode;
+    window.__overrideNextCode = null;
+    return c;
+  }
+  const a = new Uint32Array(4);
+  crypto.getRandomValues(a);
+  return Array.from(a, n => String.fromCharCode(65 + n % 26)).join('');
+}
+
+// maxLen: 8192 for guest input messages, 262144 for host state snapshots
+function decode(raw, maxLen = 8192) {
+  if (typeof raw !== 'string' || raw.length > maxLen) return null;
+  try { const d = JSON.parse(raw); return (d && typeof d === 'object') ? d : null; }
+  catch { return null; }
+}
+
+function send(conn, data) {
+  if (!conn?.open) return;
+  if (conn.bufferSize > 64) { conn.close(); return; }
+  // Also guard on raw byte backpressure — bufferedAmount is the authoritative byte queue size
+  const dc = conn.dataChannel;
+  if (dc && dc.bufferedAmount > 1048576) { conn.close(); return; }
+  try { conn.send(JSON.stringify(data)); } catch { conn.close(); }
+}
+
+function broadcast(data) {
+  for (const c of connections.values()) if (c.accepted) send(c, data);
+}
+
+function getMyPlayer() {
+  return isHost
+    ? engine?.players.get(myId)
+    : guestState?.players?.find(p => p.id === myId);
+}
+
+function getCurrentInput() {
+  return { keys: { ...keysDown }, angle: mouseAngle, shooting, weapon: currentWeapon };
+}
+
+// ── Screen transitions ────────────────────────────────────────────────────────
+function showLobby(keepEntry = false) {
+  lobbyEl.hidden = false;
+  gameEl.hidden  = true;
+  if (!keepEntry) {
+    choiceEl.hidden = false;
+    entryEl.hidden  = true;
+    $('createBtn').hidden = true;
+    $('joinBtn').hidden   = true;
+  }
+  $('createBtn').disabled = false;
+  $('joinBtn').disabled   = false;
+  document.title = 'Birdseye Arena';
+}
+
+function showEntryForm(isCreate) {
+  choiceEl.hidden = true;
+  entryEl.hidden  = false;
+  codeField.hidden = isCreate;
+  $('createBtn').hidden = !isCreate;
+  $('joinBtn').hidden   = isCreate;
+  $('entryTitle').textContent = isCreate ? 'Create Room' : 'Join Room';
+  nameInput.focus();
+}
+
+function showGame() {
+  lobbyEl.hidden = true;
+  gameEl.hidden  = false;
+  $('hudRoomCode').textContent = code;
+  document.title = code + ' — Birdseye Arena';
+}
+
+// ── Host — create room ────────────────────────────────────────────────────────
+function startHost(name) {
+  myName   = name;
+  isHost   = true;
+  ready    = false;
+  colorIndex = 0;
+  engine   = new GameEngine();
+  obstacles = engine.obstacles;
+
+  function connect(attempt) {
+    if (attempt > 12) { fail('Could not reserve a room code after many retries.'); return; }
+    code = makeCode();
+    const p = new Peer(PREFIX + code, peerOptions);
+    peer = p;
+
+    p.on('open', () => {
+      if (peer !== p) return;
+      const color = playerColor(colorIndex++);
+      engine.addPlayer(p.id, name, color);
+      myId  = p.id;
+      ready = true;
+      clearTimeout(setupTimer);
+      history.replaceState(null, '', '?room=' + code);
+      showGame();
+      startHostLoop();
+      startHeartbeat();
+      setStatus('');
+    });
+
+    p.on('connection', c => { if (ready) hostConnection(c); else c.close(); });
+
+    p.on('error', e => {
+      if (peer !== p) return;
+      if (e.type === 'unavailable-id' && attempt < 12) {
+        peer = null; p.destroy(); connect(attempt + 1); return;
+      }
+      fail('Room creation failed (' + e.type + '). Try again.');
+    });
+
+    p.on('disconnected', () => {
+      if (peer !== p || !ready) return;
+      setStatus('Reconnecting to signaling…');
+      let retries = 0;
+      function tryRecon() {
+        if (peer !== p || p.destroyed || !p.disconnected) return;
+        if (++retries > 5) { stop('Signal connection lost. Reload to try again.'); return; }
+        try { p.reconnect(); } catch {}
+        setTimeout(tryRecon, 3000);
+      }
+      setTimeout(tryRecon, 1500);
+    });
+  }
+  connect(0);
+}
+
+function hostConnection(conn) {
+  if (engine.players.size >= MAX_PLAYERS) {
+    conn.on('open', () => {
+      send(conn, { t: 'error', message: 'Room is full (8 players).' });
+      setTimeout(() => conn.close(), 400);
+    });
+    return;
+  }
+  connections.set(conn.peer, conn);
+  conn.accepted = false;
+  conn.last = Date.now(); conn.rateTs = Date.now(); conn.rate = 0;
+
+  conn.on('data', raw => receiveFromGuest(conn, raw));
+  conn.on('close', () => {
+    connections.delete(conn.peer);
+    if (conn.accepted && engine) {
+      engine.removePlayer(conn.peer);
+      broadcastCurrentState();
+    }
+  });
+  conn.on('error', () => conn.close());
+  setTimeout(() => { if (!conn.accepted) conn.close(); }, 15000);
+}
+
+function receiveFromGuest(conn, raw) {
+  if (!engine) return;
+  const d = decode(raw);
+  if (!d) { conn.close(); return; }
+  conn.last = Date.now();
+
+  if (d.t === 'pong') return;
+
+  if (!conn.accepted) {
+    if (d.t !== 'hello' || typeof d.name !== 'string' || !d.name.trim() || d.name.length > 32) return;
+    if (engine.players.size >= MAX_PLAYERS) {
+      send(conn, { t: 'error', message: 'Room is full (8 players).' });
+      setTimeout(() => conn.close(), 400);
+      return;
+    }
+    const color = playerColor(colorIndex++);
+    engine.addPlayer(conn.peer, d.name.trim(), color);
+    conn.accepted = true;
+    // Welcome: full state snapshot so guest can join mid-game
+    send(conn, { t: 'welcome', id: conn.peer, state: engine.getState(), obstacles: engine.obstacles });
+    broadcastCurrentState();
+    return;
+  }
+
+  // Rate-limit: 90 input messages/second per guest (guest loop fires every 33 ms ≈ 30/s)
+  const now = Date.now();
+  if (now - conn.rateTs > 1000) { conn.rateTs = now; conn.rate = 0; }
+  if (++conn.rate > 90) { conn.close(); return; }
+
+  if (d.t === 'input') {
+    engine.setInput(conn.peer, { keys: d.keys, angle: d.angle, shooting: d.shooting, weapon: d.weapon });
+  }
+}
+
+function broadcastCurrentState() {
+  if (!engine || !ready) return;
+  const state = engine.getState();
+  for (const c of connections.values()) {
+    if (c.accepted) send(c, { t: 'state', state });
+  }
+}
+
+// ── Guest — join room ─────────────────────────────────────────────────────────
+function startGuest(name, roomCode) {
+  myName = name;
+  isHost = false;
+  ready  = false;
+  code   = roomCode;
+
+  const p = new Peer(peerOptions);
+  peer = p;
+
+  p.on('open', () => {
+    if (peer !== p) return;
+    upstream = p.connect(PREFIX + roomCode, { reliable: true, serialization: 'raw' });
+    upstream.on('open', () => { send(upstream, { t: 'hello', name }); });
+    upstream.on('data', raw => receiveFromHost(raw));
+    upstream.on('close', () => { if (peer === p) stop('Host disconnected. Room ended.'); });
+    upstream.on('error', () => { if (peer === p) fail('Cannot reach host. Check code and host tab.'); });
+  });
+
+  p.on('error', e => {
+    if (peer !== p) return;
+    fail(e.type === 'peer-unavailable'
+      ? 'Room not found. Check the code and ensure host is open.'
+      : 'Connection failed (' + e.type + ').');
+  });
+
+  p.on('disconnected', () => {
+    if (peer !== p || !ready) return;
+    let r = 0;
+    function tryR() {
+      if (peer !== p || p.destroyed || !p.disconnected) return;
+      if (++r > 3) { stop('Connection lost.'); return; }
+      try { p.reconnect(); } catch {}
+      setTimeout(tryR, 3000);
+    }
+    setTimeout(tryR, 1000);
+  });
+}
+
+function receiveFromHost(raw) {
+  // Host snapshots can reach ~60 KB at 8 players + 512 bullets; allow up to 262144 chars
+  const d = decode(raw, 262144);
+  if (!d) { fail('Invalid message from host.'); return; }
+
+  if (d.t === 'ping') { send(upstream, { t: 'pong' }); return; }
+
+  if (d.t === 'welcome') {
+    myId      = d.id;
+    guestState = d.state;
+    obstacles  = d.obstacles || DEFAULT_OBSTACLES;
+    ready = true;
+    clearTimeout(setupTimer);
+    history.replaceState(null, '', '?room=' + code);
+    showGame();
+    startGuestLoop();
+    startHeartbeat();
+    setStatus('');
+    return;
+  }
+
+  if (!ready) return;
+
+  if (d.t === 'state') {
+    guestState = d.state;
+    for (const ev of (guestState.events || [])) {
+      if (ev.kind === 'kill') pushKillFeed(ev, guestState.players);
+    }
+  } else if (d.t === 'end') {
+    stop('The host ended the room.');
+  } else if (d.t === 'error') {
+    fail(d.message || 'Server error.');
+  }
+}
+
+// ── Kill feed ─────────────────────────────────────────────────────────────────
+function pushKillFeed(ev, players) {
+  const kn = players?.find(p => p.id === ev.killer)?.name;
+  const vn = players?.find(p => p.id === ev.victim)?.name;
+  if (!kn || !vn) return;
+  killFeed.unshift({ text: kn + ' → ' + vn, at: Date.now() });
+  if (killFeed.length > 5) killFeed.pop();
+}
+
+// ── Game loops ────────────────────────────────────────────────────────────────
+function startHostLoop() {
+  tickInterval = setInterval(() => {
+    if (!ready || !engine) return;
+    engine.setInput(myId, getCurrentInput());
+    engine.tick(TICK_MS);
+    const state = engine.getState();
+    for (const ev of state.events) if (ev.kind === 'kill') pushKillFeed(ev, state.players);
+    broadcastCurrentState();
+  }, TICK_MS);
+  requestAnimationFrame(hostFrame);
+}
+
+function hostFrame() {
+  if (!ready || !engine) return;
+  requestAnimationFrame(hostFrame);
+  render(engine.getState(), engine.obstacles);
+}
+
+function startGuestLoop() {
+  tickInterval = setInterval(() => {
+    if (!ready || !upstream?.open) return;
+    send(upstream, { t: 'input', ...getCurrentInput() });
+  }, 33);
+  requestAnimationFrame(guestFrame);
+}
+
+function guestFrame() {
+  if (!ready) return;
+  requestAnimationFrame(guestFrame);
+  if (guestState) render(guestState, obstacles);
+}
+
+// ── Heartbeat ─────────────────────────────────────────────────────────────────
+function startHeartbeat() {
+  heartbeatInterval = setInterval(() => {
+    if (!ready || !isHost) return;
+    const now = Date.now();
+    for (const c of connections.values()) {
+      if (now - c.last > 16000) c.close();
+      else send(c, { t: 'ping' });
+    }
+  }, 4000);
+}
+
+// ── Cleanup ───────────────────────────────────────────────────────────────────
+function stop(message) {
+  clearTimeout(setupTimer);
+  clearInterval(tickInterval);
+  clearInterval(heartbeatInterval);
+  tickInterval = heartbeatInterval = null;
+  ready = false;
+  const old = peer; peer = null;
+  old?.destroy();
+  for (const c of connections.values()) try { c.close(); } catch {}
+  connections.clear();
+  upstream  = null;
+  engine    = null;
+  guestState = null;
+  colorIndex = 0;
+  killFeed.length = 0;
+  Object.keys(keysDown).forEach(k => delete keysDown[k]);
+  shooting = false;
+  history.replaceState(null, '', location.pathname);
+  showLobby();
+  if (message) setStatus(message);
+}
+
+function fail(msg) { stop(msg + ' You can try again.'); }
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+const BULLET_COL = ['#ffe040', '#00e8ff', '#ff7800'];
+const BG = '#050608';
+
+function render(state, obs) {
+  const W = canvas.width, H = canvas.height;
+
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  const me = state.players.find(p => p.id === myId);
+
+  // Camera: follow alive me, clamped to world
+  if (me && me.alive) {
+    cameraX = Math.max(0, Math.min(WORLD_W - W, me.x - W / 2));
+    cameraY = Math.max(0, Math.min(WORLD_H - H, me.y - H / 2));
+  }
+
+  ctx.save();
+  ctx.translate(-cameraX, -cameraY);
+
+  // Grid
+  ctx.strokeStyle = '#08090e';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= WORLD_W; x += 100) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD_H); ctx.stroke();
+  }
+  for (let y = 0; y <= WORLD_H; y += 100) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD_W, y); ctx.stroke();
+  }
+
+  // World border
+  ctx.strokeStyle = '#182050';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1, 1, WORLD_W - 2, WORLD_H - 2);
+
+  // Obstacles
+  for (const ob of obs) {
+    ctx.fillStyle = '#0b0e1c';
+    ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+    ctx.strokeStyle = '#2848c8';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#2848c8';
+    ctx.shadowBlur  = 10;
+    ctx.strokeRect(ob.x + 1, ob.y + 1, ob.w - 2, ob.h - 2);
+    ctx.shadowBlur = 0;
+  }
+
+  // Bullets
+  for (const b of state.bullets) {
+    const col = BULLET_COL[b.weapon] || '#fff';
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = 14;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, BULLET_RADIUS + 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // Players
+  for (const p of state.players) {
+    if (!p.alive) continue;
+    const isMe = p.id === myId;
+    const col  = p.color || '#4088ff';
+
+    // Spawn protection dashed ring
+    if (state.time < p.protectedUntil) {
+      ctx.strokeStyle = 'rgba(200,220,255,.45)';
+      ctx.lineWidth   = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, PLAYER_RADIUS + 8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Glow + body
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = isMe ? 24 : 14;
+    ctx.fillStyle   = col;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PLAYER_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Gun barrel
+    ctx.strokeStyle = isMe ? '#ffffff' : 'rgba(255,255,255,.65)';
+    ctx.lineWidth   = 3;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + Math.cos(p.angle) * (PLAYER_RADIUS + 10),
+               p.y + Math.sin(p.angle) * (PLAYER_RADIUS + 10));
+    ctx.stroke();
+
+    // Health bar
+    const bW = PLAYER_RADIUS * 2.5, bH = 4;
+    const bX = p.x - bW / 2, bY = p.y - PLAYER_RADIUS - 15;
+    ctx.fillStyle = '#101424';
+    ctx.fillRect(bX, bY, bW, bH);
+    const hf = Math.max(0, p.health / MAX_HEALTH);
+    ctx.fillStyle = hf > .5 ? '#2eff70' : hf > .25 ? '#ffcc20' : '#ff3060';
+    ctx.fillRect(bX, bY, bW * hf, bH);
+
+    // Name (safe textContent-equivalent via fillText)
+    ctx.fillStyle = isMe ? '#ffffff' : '#90a8d8';
+    ctx.font = '11px system-ui,sans-serif';
+    ctx.textAlign     = 'center';
+    ctx.textBaseline  = 'bottom';
+    ctx.fillText(p.name, p.x, bY - 3);
+  }
+
+  ctx.textAlign    = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+
+  // ── Death overlay ────────────────────────────────────────────────────────
+  if (me && !me.alive) {
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle    = '#ff3366';
+    ctx.font         = 'bold 36px system-ui,sans-serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ELIMINATED', W / 2, H / 2 - 24);
+    const rem = me.respawnAt ? Math.max(0, me.respawnAt - state.time) / 1000 : 0;
+    ctx.fillStyle = '#9ab0d8';
+    ctx.font      = '17px system-ui,sans-serif';
+    ctx.fillText('Respawning in ' + rem.toFixed(1) + 's', W / 2, H / 2 + 20);
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ── Sidebar update (throttled) ────────────────────────────────────────────
+  const now = Date.now();
+  if (now - lastSidebarUpdate > 80) {
+    lastSidebarUpdate = now;
+    updateSidebar(state);
+  }
+}
+
+function updateSidebar(state) {
+  const me = state.players.find(p => p.id === myId);
+  if (!me) return;
+
+  // Health
+  const hf = Math.max(0, me.health / MAX_HEALTH);
+  const hbar = $('hudHealthBar');
+  hbar.style.width = (hf * 100) + '%';
+  hbar.style.background = hf > .5 ? '#2eff70' : hf > .25 ? '#ffcc20' : '#ff3060';
+
+  // Weapon buttons
+  document.querySelectorAll('.weapon-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === me.weapon);
+  });
+
+  // K/D
+  $('hudKills').textContent  = me.kills;
+  $('hudDeaths').textContent = me.deaths;
+
+  // Player list
+  const pl = $('hudPlayers');
+  pl.replaceChildren();
+  for (const p of state.players) {
+    const row  = document.createElement('div');
+    row.className = 'player-row' + (p.alive ? '' : ' dead');
+    const dot  = document.createElement('span');
+    dot.className = 'player-dot';
+    dot.style.background = p.color || '#4088ff';
+    const nm   = document.createElement('span');
+    nm.className = 'player-name';
+    nm.textContent = p.name + (p.id === myId ? ' ★' : '');
+    const kd   = document.createElement('span');
+    kd.className = 'player-kd';
+    kd.textContent = p.kills + '/' + p.deaths;
+    row.append(dot, nm, kd);
+    pl.append(row);
+  }
+
+  // Kill feed
+  const feed = $('hudFeed');
+  feed.replaceChildren();
+  for (const e of killFeed) {
+    const row = document.createElement('div');
+    row.className = 'feed-row';
+    row.textContent = e.text;
+    feed.append(row);
+  }
+}
+
+// ── Input ────────────────────────────────────────────────────────────────────
+const KEY_MAP = {
+  w:'w', W:'w', ArrowUp:'up',
+  s:'s', S:'s', ArrowDown:'down',
+  a:'a', A:'a', ArrowLeft:'left',
+  d:'d', D:'d', ArrowRight:'right',
+};
+
+document.addEventListener('keydown', e => {
+  if (!ready) return;
+  const k = KEY_MAP[e.key];
+  if (k) { keysDown[k] = true; e.preventDefault(); return; }
+  if (e.key === '1') currentWeapon = 0;
+  if (e.key === '2') currentWeapon = 1;
+  if (e.key === '3') currentWeapon = 2;
+});
+
+document.addEventListener('keyup', e => {
+  const k = KEY_MAP[e.key];
+  if (k) keysDown[k] = false;
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!ready) return;
+  const rect   = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const wx = cameraX + (e.clientX - rect.left) * scaleX;
+  const wy = cameraY + (e.clientY - rect.top)  * scaleY;
+  const me = getMyPlayer();
+  if (me) mouseAngle = Math.atan2(wy - me.y, wx - me.x);
+});
+
+canvas.addEventListener('mousedown',    e => { if (e.button === 0) shooting = true; });
+canvas.addEventListener('mouseup',      e => { if (e.button === 0) shooting = false; });
+canvas.addEventListener('mouseleave',   ()  => { shooting = false; });
+canvas.addEventListener('contextmenu',  e   => e.preventDefault());
+canvas.addEventListener('wheel', e => {
+  if (!ready) return;
+  e.preventDefault();
+  currentWeapon = (currentWeapon + (e.deltaY > 0 ? 1 : -1) + 3) % 3;
+}, { passive: false });
+
+// ── Lobby event handlers ──────────────────────────────────────────────────────
+$('btnCreate').addEventListener('click', () => { showEntryForm(true);  setStatus(''); });
+$('btnJoin'  ).addEventListener('click', () => { showEntryForm(false); setStatus(''); });
+
+$('btnBack').addEventListener('click', () => {
+  if (peer) stop('');
+  choiceEl.hidden = false;
+  entryEl.hidden  = true;
+  setStatus('');
+});
+
+$('entry').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = nameInput.value.trim();
+  if (!name) { setStatus('Please enter your name.'); nameInput.focus(); return; }
+  if (typeof Peer === 'undefined') { setStatus('PeerJS library failed to load. Check your connection.'); return; }
+
+  const creatingRoom = !$('createBtn').hidden;
+
+  if (!creatingRoom) {
+    const rc = codeInput.value.trim().toUpperCase();
+    if (!/^[A-Z]{4}$/.test(rc)) { setStatus('Enter a valid 4-letter room code.'); codeInput.focus(); return; }
+    $('joinBtn').disabled = true;
+    setStatus('Connecting to room…');
+    setupTimer = setTimeout(() => fail('Connection timed out. Check code and network.'), 28000);
+    startGuest(name, rc);
+  } else {
+    $('createBtn').disabled = true;
+    setStatus('Creating room…');
+    setupTimer = setTimeout(() => fail('Connection timed out. Check your network.'), 28000);
+    startHost(name);
+  }
+});
+
+$('btnLeave').addEventListener('click', () => {
+  if (isHost) broadcast({ t: 'end' });
+  stop(isHost ? 'You ended the room.' : 'You left the room.');
+});
+
+document.querySelectorAll('.weapon-btn').forEach((btn, i) => {
+  btn.addEventListener('click', () => { currentWeapon = i; });
+});
+
+$('shareBtn').addEventListener('click', () => {
+  const url = location.href;
+  (navigator.clipboard?.writeText(url) || Promise.reject())
+    .then(() => { $('shareBtn').textContent = 'Copied!'; setTimeout(() => $('shareBtn').textContent = 'Share Link', 2200); })
+    .catch(() => prompt('Share this link:', url));
+});
+
+// ── URL pre-fill ──────────────────────────────────────────────────────────────
+{
+  const roomParam = urlParams.get('room');
+  if (roomParam && /^[A-Z]{4}$/.test(roomParam)) {
+    showEntryForm(false);
+    codeInput.value = roomParam;
+    setStatus('Room code from URL. Enter your name and join.');
+  }
+  if (window.innerWidth < 900) {
+    $('smallScreenWarn').hidden = false;
+  }
+}
+
+// ── Debug state for Playwright tests ─────────────────────────────────────────
+Object.defineProperty(window, '__debug', {
+  get() {
+    return {
+      ready, isHost, myId, code,
+      players: isHost ? (engine ? [...engine.players.values()] : []) : (guestState?.players ?? []),
+      bullets: isHost ? (engine?.bullets ?? []) : (guestState?.bullets ?? []),
+      // sendRaw lets tests inject messages as a guest (upstream is module-scoped)
+      sendRaw: (data) => {
+        if (!isHost && upstream?.open) {
+          try { upstream.send(JSON.stringify(data)); } catch {}
+        }
+      },
+      // __testReceiveFromHost: regression hook — injects a raw string directly into
+      // the guest receive path, bypassing the network, to verify large-state decode.
+      // Only valid on a connected guest (ready && !isHost).
+      __testReceiveFromHost: (!isHost && ready) ? receiveFromHost : undefined,
+    };
+  },
+});
+
+// ── Initial dark canvas ───────────────────────────────────────────────────────
+ctx.fillStyle = BG;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+</script>
+</body></html>

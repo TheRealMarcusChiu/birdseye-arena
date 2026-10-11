@@ -1,0 +1,14 @@
+{
+  "name": "birdseye-arena",
+  "version": "1.0.0",
+  "description": "Top-down multiplayer shooter with WebRTC P2P networking",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/engine.test.js",
+    "test:e2e": "node tests/e2e.cjs"
+  },
+  "devDependencies": {
+    "peer": "^1.0.2",
+    "playwright": "^1.63.0"
+  }
+}
