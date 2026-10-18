@@ -3,59 +3,61 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Birdseye Arena</title>
 <style>
-:root{--bg:#07090f;--s:#0d1020;--s2:#141828;--brd:#1e2440;--acc:#4a8eff;--acc2:#a060ff;--danger:#ff3366;--ok:#30ff88;--tx:#c0ccee;--dim:#4a5880;--mono:'Courier New',monospace;color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+:root{--bg:#07090f;--s:#0d1520;--s2:#111e30;--brd:#1c2d45;--acc:#4a8eff;--acc2:#a060ff;--danger:#ff6b6b;--ok:#30ff88;--warn:#ffcc20;--tx:#e8f0fe;--dim:#6a8daf;--ring:0 0 0 3px rgba(74,142,255,.35);--r-card:16px;--r-ctl:10px;--sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;color-scheme:dark;font-family:var(--sans)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100vh;background:var(--bg);color:var(--tx)}
+html,body{min-height:100vh;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
 button,input{font:inherit}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 [hidden]{display:none!important}
 
 /* ── Lobby ─────────────────────────────────────────────────────────── */
-#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:radial-gradient(ellipse at 50% 40%,#0d1230 0%,var(--bg) 70%)}
-.lcard{background:var(--s);border:1px solid var(--brd);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 0 60px rgba(74,142,255,.07)}
-.gtitle{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;background:linear-gradient(130deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.gsub{font-size:12px;color:var(--dim);margin-bottom:32px;letter-spacing:.3px}
+#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:radial-gradient(ellipse at 50% 40%,var(--s) 0%,var(--bg) 70%)}
+.lcard{background:var(--s);border:1px solid var(--brd);border-radius:var(--r-card);padding:32px 28px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.gtitle{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1.2;margin-bottom:4px;background:linear-gradient(130deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.gsub{font-size:13px;color:var(--dim);margin-bottom:24px;letter-spacing:.3px}
 .choice-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{padding:11px 16px;border:1px solid var(--brd);border-radius:9px;background:var(--s2);color:var(--tx);font-size:13px;font-weight:600;cursor:pointer;transition:filter .12s,background .12s;text-align:center}
+.btn{padding:12px 16px;border:1px solid var(--brd);border-radius:var(--r-ctl);background:var(--s2);color:var(--tx);font-size:14px;font-weight:600;line-height:1.2;cursor:pointer;transition:filter .15s,background .15s,border-color .15s;text-align:center}
 .btn:hover:not(:disabled){filter:brightness(1.2)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.primary{background:var(--acc);color:#fff;border-color:transparent;box-shadow:0 0 20px rgba(74,142,255,.25)}
+.btn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
 .btn.full{width:100%}
-.btn.sm{padding:7px 12px;font-size:12px}
-.btn.danger{background:var(--danger);color:#fff;border-color:transparent}
-label{display:block;font-size:11px;font-weight:600;color:var(--dim);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
-input[type=text]{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--tx);font-size:14px;outline:none;transition:border-color .15s}
-input[type=text]:focus{border-color:var(--acc)}
-input::placeholder{color:var(--dim)}
+.btn.sm{padding:8px 12px;font-size:12px}
+.btn.danger{background:var(--danger);color:var(--bg);border-color:var(--danger)}
+.entry-title{font-size:15px;font-weight:700;margin-bottom:4px}
+label{display:block;font-size:12px;font-weight:600;color:var(--dim);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
+input[type=text]{width:100%;padding:11px 13px;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-ctl);color:var(--tx);font-size:14px;line-height:1.4;outline:none;transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus{border-color:var(--acc);box-shadow:var(--ring)}
+input::placeholder{color:var(--dim);opacity:.7}
 #codeInput{text-transform:uppercase;letter-spacing:4px;font-family:var(--mono);font-size:16px}
 .entry-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
 #status{margin-top:16px;min-height:36px;font-size:13px;color:var(--tx);line-height:1.5}
 #status:empty{display:none}
-.lobby-note{margin-top:20px;font-size:11px;color:var(--dim);line-height:1.6;text-align:center}
-.small-screen-warn{margin-top:16px;padding:12px 14px;background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.3);border-radius:8px;font-size:12px;color:#ff8099}
+.lobby-note{margin-top:20px;font-size:12px;color:var(--dim);line-height:1.6;text-align:center}
+.small-screen-warn{margin-top:16px;padding:12px 14px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:var(--r-ctl);font-size:12px;color:var(--danger)}
 
 /* ── Game ──────────────────────────────────────────────────────────── */
 #game{display:flex;height:100vh;overflow:hidden}
 #canvasWrap{flex:1;display:flex;align-items:center;justify-content:center;background:#030508;overflow:hidden;min-width:0}
 #canvas{display:block;max-width:100%;max-height:100%;cursor:crosshair;image-rendering:crisp-edges}
 #sidebar{width:196px;min-width:196px;background:var(--s);border-left:1px solid var(--brd);padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;font-size:13px}
-.hud-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:5px}
-.health-track{height:7px;background:var(--s2);border-radius:4px;overflow:hidden}
+.hud-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:6px}
+.health-track{height:7px;background:var(--s2);border:1px solid var(--brd);border-radius:4px;overflow:hidden}
 #hudHealthBar{height:100%;border-radius:4px;background:var(--ok);transition:width .12s,background .12s}
 .weapon-row{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.weapon-btn{padding:6px 2px;font-size:10px;font-weight:700;background:var(--s2);border:1px solid var(--brd);border-radius:6px;color:var(--dim);cursor:pointer;text-align:center;transition:all .1s;letter-spacing:.3px}
-.weapon-btn.active{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 0 8px rgba(74,142,255,.4)}
-.kd-row{display:flex;align-items:baseline;gap:6px;font-family:var(--mono)}
+.weapon-btn{padding:6px 2px;font-size:10px;font-weight:700;background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--dim);cursor:pointer;text-align:center;transition:all .15s;letter-spacing:.3px}
+.weapon-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+.kd-row{display:flex;align-items:baseline;gap:6px;font-family:var(--mono);font-variant-numeric:tabular-nums}
 #hudKills{font-size:26px;font-weight:700;color:var(--ok)}
 #hudDeaths{font-size:26px;font-weight:700;color:var(--danger)}
 .kd-sep{font-size:16px;color:var(--dim)}
 .kd-label{font-size:10px;color:var(--dim);margin-left:2px}
-.player-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-top:1px solid var(--brd);font-size:11px}
+.player-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--brd);font-size:12px}
 .player-row.dead{opacity:.4}
-.player-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.player-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .player-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.player-kd{font-family:var(--mono);font-size:10px;color:var(--dim);flex-shrink:0}
-#hudRoomCode{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:4px;color:var(--acc);margin-bottom:6px}
-.feed-row{font-size:10px;color:var(--dim);padding:2px 0;border-bottom:1px solid var(--brd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-kd{font-family:var(--mono);font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;flex-shrink:0}
+#hudRoomCode{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:4px;color:var(--acc);margin-bottom:8px}
+.feed-row{font-size:11px;color:var(--dim);padding:3px 0;border-bottom:1px solid var(--brd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud-footer{margin-top:auto;padding-top:8px}
 .hud-sep{border:0;border-top:1px solid var(--brd)}
 
@@ -82,7 +84,7 @@ input::placeholder{color:var(--dim)}
     </div>
 
     <form id="entry" hidden>
-      <div id="entryTitle" style="font-size:15px;font-weight:700;margin-bottom:4px">Join Room</div>
+      <div id="entryTitle" class="entry-title">Join Room</div>
       <label for="nameInput">Your name</label>
       <input id="nameInput" type="text" maxlength="24" placeholder="Enter name" autocomplete="nickname" autocorrect="off">
       <div id="codeField">
@@ -714,7 +716,7 @@ function updateSidebar(state) {
   const hf = Math.max(0, me.health / MAX_HEALTH);
   const hbar = $('hudHealthBar');
   hbar.style.width = (hf * 100) + '%';
-  hbar.style.background = hf > .5 ? '#2eff70' : hf > .25 ? '#ffcc20' : '#ff3060';
+  hbar.style.background = hf > .5 ? 'var(--ok)' : hf > .25 ? 'var(--warn)' : 'var(--danger)';
 
   // Weapon buttons
   document.querySelectorAll('.weapon-btn').forEach((btn, i) => {
